@@ -222,7 +222,7 @@
                 const gift = selectedGift ? selectedGift : 'Nenhum presente selecionado ainda';
                 const userMessage = message ? `\n\nMensagem: ${message}` : '';
                 const whatsappMessage = `Olá! Confirmo minha presença no Chá de Panela da Stefanny & Dhiego! 🎉\n\nPresente escolhido: ${gift}${userMessage}\n\nNos vemos dia 14/02/2026! 💕`;
-                const whatsappUrl = `https://wa.me/5562995423241?text=${encodeURIComponent(whatsappMessage)}`;
+                const whatsappUrl = `https://wa.me/5562995483241?text=${encodeURIComponent(whatsappMessage)}`;
                 
                 setConfirmed(true);
                 setTimeout(() => {
@@ -371,7 +371,7 @@ END:VCALENDAR`;
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
                             <h3 className="text-xl font-semibold text-rose-600 mb-4 flex items-center gap-2">
-                                <Image /> Nossos Momentos
+                               
                             </h3>
                             <div className="rounded-2xl overflow-hidden shadow-lg">
                                 <video 
@@ -557,23 +557,7 @@ END:VCALENDAR`;
                             )}
                         </div>
 
-                        <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-                            <h3 className="text-xl font-semibold text-rose-600 mb-4 flex items-center gap-2">
-                                <MessageCircle /> Deixe sua Mensagem
-                            </h3>
-                            <textarea
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                                placeholder="Escreva uma mensagem carinhosa para o casal... ❤️"
-                                className="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-rose-300 focus:outline-none resize-none"
-                                rows="4"
-                            />
-                            <p className="text-xs text-gray-400 mt-2">
-                                Sua mensagem será enviada junto com a confirmação via WhatsApp
-                            </p>
-                        </div>
-
-                        <div className="bg-white rounded-3xl shadow-xl p-6 text-center">
+                          <div className="bg-white rounded-3xl shadow-xl p-6 text-center">
                             <button
                                 onClick={handleConfirm}
                                 className={`w-full py-4 rounded-full text-lg font-semibold transition-all transform hover:scale-105 ${
@@ -591,7 +575,7 @@ END:VCALENDAR`;
                                 )}
                             </button>
                             <p className="text-sm text-gray-500 mt-4">
-                                Contato: (62) 99542-3241
+                                Contato: (62) 99548-3241
                             </p>
                         </div>
                     </div>
