@@ -8,7 +8,6 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Open Graph para WhatsApp / redes sociais -->
     <meta property="og:title" content="Chá de Panela - Stefanny & Dhiego" />
     <meta property="og:description" content="Você foi convidado para o Chá de Panela da Stefanny & Dhiego! 🎉 Data: 14/02/2026 às 17:00h. Local: Espaço Esquina do Paraiso - Res. Paraiso 2." />
     <meta property="og:image" content="https://dhiego16.github.io/cha-de-panela/convite.png?v=1" />
@@ -70,7 +69,6 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
         
-        // Ícones simplificados (substitutos do lucide-react)
         const Heart = () => <span>❤️</span>;
         const MapPin = () => <span>📍</span>;
         const Calendar = () => <span>📅</span>;
@@ -78,11 +76,8 @@
         const Gift = () => <span>🎁</span>;
         const Check = () => <span>✓</span>;
         const Music = ({ className }) => <span className={className}>🎵</span>;
-        const MessageCircle = () => <span>💬</span>;
-        const Image = () => <span>📷</span>;
         const DollarSign = () => <span>💰</span>;
         const Navigation = () => <span>🧭</span>;
-        // NOVO ÍCONE DE CÓPIA
         const Copy = () => <span>📋</span>;
 
         function ChaDePanelaInvite() {
@@ -94,7 +89,6 @@
             const [message, setMessage] = useState('');
             const [isPlaying, setIsPlaying] = useState(false);
             const [showPix, setShowPix] = useState(false);
-            // NOVO ESTADO PARA FEEDBACK DE CÓPIA
             const [pixCopied, setPixCopied] = useState(false); 
             const audioRef = useRef(null);
 
@@ -109,11 +103,9 @@
                 }
             };
 
-            // Inicia a música automaticamente quando abre o convite
             useEffect(() => {
                 if (isOpen && audioRef.current) {
-                    // Define o tempo inicial (em segundos) - ajuste conforme necessário
-                    audioRef.current.currentTime = 60; // Começa em 1 minuto
+                    audioRef.current.currentTime = 60;
                     audioRef.current.play()
                         .then(() => setIsPlaying(true))
                         .catch(err => console.log('Autoplay bloqueado pelo navegador'));
@@ -193,21 +185,17 @@
                 }
             }, [flowers]);
 
-            // NOVA FUNÇÃO DE COPIAR
             const copyPixKey = async () => {
                 const pixKey = "00020126580014BR.GOV.BCB.PIX0136907ff8c6-32fc-45e1-b013-f33bbffc73895204000053039865802BR5921Dhiego Rodrigues Dias6009SAO PAULO621405100h9jlWZlEi63041190";
                 try {
-                    // Usa a API Clipboard (moderna)
                     await navigator.clipboard.writeText(pixKey);
                     setPixCopied(true);
-                    // Reseta o feedback após 2 segundos
                     setTimeout(() => setPixCopied(false), 2000); 
                 } catch (err) {
                     console.error('Falha ao copiar texto: ', err);
                     alert('Erro ao copiar a chave. Por favor, copie manualmente.');
                 }
             };
-            // FIM DA NOVA FUNÇÃO
 
             const gifts = [
                 'Jogo de panelas',
@@ -224,8 +212,6 @@
                 'Forma de bolo'
             ];
 
-            const couplePhotos = ['👫', '💑', '❤️'];
-
             const handleConfirm = () => {
                 const gift = selectedGift ? selectedGift : 'Nenhum presente selecionado ainda';
                 const userMessage = message ? `\n\nMensagem: ${message}` : '';
@@ -240,34 +226,13 @@
             };
 
             const handleOpenMaps = () => {
-                // Abre diretamente o link curto do Google Maps fornecido
                 const mapsUrl = 'https://maps.app.goo.gl/vcshqsjwYWUnmFJY6';
                 window.open(mapsUrl, '_blank');
             };
 
-            const downloadCalendar = () => {
-                const icsContent = `BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-DTSTART:20260214T150000
-DTEND:20260214T190000
-SUMMARY:Chá de Panela - Stefanny & Dhiego
-DESCRIPTION:Chá de Panela da Stefanny e Dhiego
-LOCATION:Espaço Esquina do Paraiso - Res. Paraiso 2
-END:VEVENT
-END:VCALENDAR`;
-                
-                const blob = new Blob([icsContent], { type: 'text/calendar' });
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'cha-de-panela-stefanny-dhiego.ics';
-                link.click();
-            };
-
             if (!isOpen) {
                 return (
-                    <div className="min-h-screen bg-gradient-to-br from-rose-400 via-pink-300 to-red-300 flex items-center justify-center p-4 relative overflow-hidden">
+                    <div className="min-h-screen bg-gradient-to-br from-purple-400 via-violet-300 to-purple-300 flex items-center justify-center p-4 relative overflow-hidden">
                         <div className="absolute top-10 left-10 text-6xl opacity-20 animate-pulse">💕</div>
                         <div className="absolute top-20 right-20 text-5xl opacity-20 animate-pulse delay-1">🎊</div>
                         <div className="absolute bottom-20 left-20 text-5xl opacity-20 animate-pulse delay-2">✨</div>
@@ -283,17 +248,26 @@ END:VCALENDAR`;
                                 </div>
                             </div>
                             
-                            <h1 className="text-3xl font-bold text-rose-600 mb-2">Você foi convidado!</h1>
+                            <h1 className="text-3xl font-bold text-purple-600 mb-2">Você foi convidado!</h1>
                             <p className="text-lg text-gray-600 mb-2">Para o Chá de Panela</p>
-                            <p className="text-2xl font-semibold text-rose-500 mb-6">Stefanny & Dhiego</p>
+                            <p className="text-2xl font-semibold text-purple-500 mb-6">Stefanny & Dhiego</p>
                             
                             <div className="mb-6 text-gray-500">
                                 <p className="text-sm">📅 14 de Fevereiro de 2026</p>
                             </div>
                             
+                            <div className="mb-6 bg-purple-50 border-2 border-purple-200 rounded-lg p-4">
+                                <p className="text-sm text-purple-700 font-semibold">
+                                    ⚠️ Atenção: Convite individual ou por casal
+                                </p>
+                                <p className="text-xs text-gray-600 mt-1">
+                                    Por favor, não leve convidados adicionais
+                                </p>
+                            </div>
+                            
                             <button
                                 onClick={() => setIsOpen(true)}
-                                className="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white px-10 py-4 rounded-full text-xl font-semibold shadow-xl transform hover:scale-110 transition-all duration-300 w-full"
+                                className="bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white px-10 py-4 rounded-full text-xl font-semibold shadow-xl transform hover:scale-110 transition-all duration-300 w-full"
                             >
                                 ✨ Abrir Convite ✨
                             </button>
@@ -309,8 +283,7 @@ END:VCALENDAR`;
             }
 
             return (
-                <div className="min-h-screen bg-gradient-to-br from-rose-100 via-pink-50 to-rose-100 relative overflow-hidden">
-                    {/* Audio Player */}
+                <div className="min-h-screen bg-gradient-to-br from-purple-100 via-violet-50 to-purple-100 relative overflow-hidden">
                     <audio ref={audioRef} loop>
                         <source src="Perfect.mp3" type="audio/mpeg" />
                         Seu navegador não suporta áudio.
@@ -319,7 +292,7 @@ END:VCALENDAR`;
                     {hearts.map(heart => (
                         <div
                             key={heart.id}
-                            className="absolute bottom-0 text-rose-400 animate-float"
+                            className="absolute bottom-0 text-purple-400 animate-float"
                             style={{
                                 left: `${heart.left}%`,
                                 animationDelay: `${heart.delay}s`,
@@ -348,14 +321,14 @@ END:VCALENDAR`;
                         <div className="bg-white rounded-3xl shadow-2xl p-8 mb-6 text-center animate-fadeIn relative">
                             <button
                                 onClick={toggleMusic}
-                                className="absolute top-4 right-4 bg-rose-100 hover:bg-rose-200 p-3 rounded-full transition-all"
+                                className="absolute top-4 right-4 bg-purple-100 hover:bg-purple-200 p-3 rounded-full transition-all"
                                 title={isPlaying ? 'Pausar música' : 'Tocar música'}
                             >
                                 <Music className={isPlaying ? 'animate-pulse' : ''} />
                             </button>
                             
                             <div className="text-6xl mb-4">👰🏻‍♀️🤵🏻</div>
-                            <h1 className="text-4xl font-bold text-rose-600 mb-2">Chá de Panela</h1>
+                            <h1 className="text-4xl font-bold text-purple-600 mb-2">Chá de Panela</h1>
                             <h2 className="text-2xl text-gray-700 mb-4">Stefanny & Dhiego</h2>
                             <p className="text-gray-600 italic">
                                 "O amor está nos detalhes... e nas panelas que vamos usar juntos!"
@@ -363,7 +336,7 @@ END:VCALENDAR`;
                         </div>
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-                            <h3 className="text-xl font-semibold text-rose-600 mb-4 flex items-center gap-2">
+                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">
                                 <Heart /> Nossa História
                             </h3>
                             <p className="text-gray-600 leading-relaxed mb-4">
@@ -378,7 +351,7 @@ END:VCALENDAR`;
                         </div>
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-                            <h3 className="text-xl font-semibold text-rose-600 mb-4 flex items-center gap-2">
+                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">
                                
                             </h3>
                             <div className="rounded-2xl overflow-hidden shadow-lg">
@@ -397,24 +370,24 @@ END:VCALENDAR`;
 
                         {timeLeft && (
                             <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-                                <h3 className="text-center text-xl font-semibold text-rose-600 mb-4">
+                                <h3 className="text-center text-xl font-semibold text-purple-600 mb-4">
                                     Contagem Regressiva
                                 </h3>
                                 <div className="flex justify-center gap-4">
                                     <div className="text-center">
-                                        <div className="bg-rose-500 text-white rounded-lg p-4 text-3xl font-bold">
+                                        <div className="bg-purple-500 text-white rounded-lg p-4 text-3xl font-bold">
                                             {timeLeft.dias}
                                         </div>
                                         <div className="text-sm text-gray-600 mt-2">dias</div>
                                     </div>
                                     <div className="text-center">
-                                        <div className="bg-rose-500 text-white rounded-lg p-4 text-3xl font-bold">
+                                        <div className="bg-purple-500 text-white rounded-lg p-4 text-3xl font-bold">
                                             {timeLeft.horas}
                                         </div>
                                         <div className="text-sm text-gray-600 mt-2">horas</div>
                                     </div>
                                     <div className="text-center">
-                                        <div className="bg-rose-500 text-white rounded-lg p-4 text-3xl font-bold">
+                                        <div className="bg-purple-500 text-white rounded-lg p-4 text-3xl font-bold">
                                             {timeLeft.minutos}
                                         </div>
                                         <div className="text-sm text-gray-600 mt-2">min</div>
@@ -424,63 +397,61 @@ END:VCALENDAR`;
                         )}
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-    <h3 className="text-xl font-semibold text-rose-600 mb-4 flex items-center gap-2">
-        <Calendar /> Detalhes do Evento
-    </h3>
-    <div className="space-y-3">
-        <div className="flex items-start gap-3">
-            <Calendar />
-            <div>
-                <p className="font-semibold">Data</p>
-                <p className="text-gray-600">Sábado, 14 de Fevereiro de 2026</p>
-            </div>
-        </div>
-        <div className="flex items-start gap-3">
-            <Clock />
-            <div>
-                <p className="font-semibold">Horário</p>
-                <p className="text-gray-600">17:00h</p>
-            </div>
-        </div>
-        <div className="flex items-start gap-3">
-            <MapPin />
-            <div className="flex-1">
-                <p className="font-semibold">Local</p>
-                <p className="text-gray-600">Espaço Esquina do Paraiso</p>
-                <p className="text-sm text-gray-500">Res. Paraiso 2 - Senador Canedo</p>
-            </div>
-        </div>
-    </div>
+                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">
+                                <Calendar /> Detalhes do Evento
+                            </h3>
+                            <div className="space-y-3">
+                                <div className="flex items-start gap-3">
+                                    <Calendar />
+                                    <div>
+                                        <p className="font-semibold">Data</p>
+                                        <p className="text-gray-600">Sábado, 14 de Fevereiro de 2026</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <Clock />
+                                    <div>
+                                        <p className="font-semibold">Horário</p>
+                                        <p className="text-gray-600">17:00h</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <MapPin />
+                                    <div className="flex-1">
+                                        <p className="font-semibold">Local</p>
+                                        <p className="text-gray-600">Espaço Esquina do Paraiso</p>
+                                        <p className="text-sm text-gray-500">Res. Paraiso 2 - Senador Canedo</p>
+                                    </div>
+                                </div>
+                            </div>
 
-    {/* Botão abrir no Google Maps */}
-    <button
-        onClick={handleOpenMaps}
-        className="w-full mt-4 bg-rose-100 hover:bg-rose-200 text-rose-600 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all"
-    >
-        <Navigation /> Abrir no Google Maps
-    </button>
+                            <button
+                                onClick={handleOpenMaps}
+                                className="w-full mt-4 bg-purple-100 hover:bg-purple-200 text-purple-600 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all"
+                            >
+                                <Navigation /> Abrir no Google Maps
+                            </button>
 
-    {/* Botão adicionar ao Google Calendar */}
-    <button
-        onClick={() => {
-            const start = '20260214T170000Z'; // muda pra 17:00
-            const end = '20260214T210000Z';   // se quiser, mantém 4h de evento
-            const title = 'Chá de Panela - Stefanny & Dhiego';
-            const details = 'Chá de Panela da Stefanny e Dhiego';
-            const location = 'Espaço Esquina do Paraiso - Res. Paraiso 2';
+                            <button
+                                onClick={() => {
+                                    const start = '20260214T170000Z';
+                                    const end = '20260214T210000Z';
+                                    const title = 'Chá de Panela - Stefanny & Dhiego';
+                                    const details = 'Chá de Panela da Stefanny e Dhiego';
+                                    const location = 'Espaço Esquina do Paraiso - Res. Paraiso 2';
 
-            const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${start}/${end}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}`;
+                                    const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${start}/${end}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}`;
 
-            window.open(url, '_blank');
-        }}
-        className="w-full mt-2 bg-pink-100 hover:bg-pink-200 text-pink-600 py-3 rounded-lg font-semibold transition-all"
-    >
-        📅 Adicionar a Agenda
-    </button>
-</div>
+                                    window.open(url, '_blank');
+                                }}
+                                className="w-full mt-2 bg-violet-100 hover:bg-violet-200 text-violet-600 py-3 rounded-lg font-semibold transition-all"
+                            >
+                                📅 Adicionar a Agenda
+                            </button>
+                        </div>
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-                            <h3 className="text-xl font-semibold text-rose-600 mb-4">
+                            <h3 className="text-xl font-semibold text-purple-600 mb-4">
                                 👗 Dress Code
                             </h3>
                             <p className="text-gray-600">
@@ -495,7 +466,7 @@ END:VCALENDAR`;
                         </div>
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-                            <h3 className="text-xl font-semibold text-rose-600 mb-4 flex items-center gap-2">
+                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">
                                 <Gift /> Sugestões de Presentes
                             </h3>
                             <div className="grid grid-cols-2 gap-3">
@@ -505,8 +476,8 @@ END:VCALENDAR`;
                                         onClick={() => setSelectedGift(selectedGift === gift ? null : gift)}
                                         className={`p-3 rounded-lg border-2 text-left transition-all ${
                                             selectedGift === gift
-                                                ? 'border-rose-500 bg-rose-50'
-                                                : 'border-gray-200 hover:border-rose-300'
+                                                ? 'border-purple-500 bg-purple-50'
+                                                : 'border-gray-200 hover:border-purple-300'
                                         }`}
                                     >
                                         <span className="text-2xl mr-2">🎁</span>
@@ -515,14 +486,14 @@ END:VCALENDAR`;
                                 ))}
                             </div>
                             {selectedGift && (
-                                <p className="mt-4 text-center text-rose-600 font-semibold">
+                                <p className="mt-4 text-center text-purple-600 font-semibold">
                                     Você selecionou: {selectedGift}
                                 </p>
                             )}
                         </div>
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-                            <h3 className="text-xl font-semibold text-rose-600 mb-4 flex items-center gap-2">
+                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">
                                 <DollarSign /> Prefere Contribuir via PIX?
                             </h3>
                             <p className="text-gray-600 mb-4">
@@ -545,9 +516,8 @@ END:VCALENDAR`;
                                     </div>
                                     <p className="text-sm text-gray-600 mb-2 text-center"><strong>PIX COPIA E COLA:</strong></p>
                                     
-                                    {/* AQUI ESTÁ A CHAVE PIX COM O BOTÃO DE COPIAR INTEGRADO */}
                                     <div className="flex items-stretch gap-2"> 
-                                        <p className="text-lg font-mono bg-white p-3 rounded border border-gray-200 text-center flex-grow break-all">
+                                        <p className="text-xs font-mono bg-white p-3 rounded border border-gray-200 text-center flex-grow break-all">
                                             00020126580014BR.GOV.BCB.PIX0136907ff8c6-32fc-45e1-b013-f33bbffc73895204000053039865802BR5921Dhiego Rodrigues Dias6009SAO PAULO621405100h9jlWZlEi63041190
                                         </p>
                                         <button
@@ -556,7 +526,7 @@ END:VCALENDAR`;
                                                 p-3 rounded-lg font-semibold transition-all flex-shrink-0 flex items-center justify-center
                                                 ${pixCopied 
                                                     ? 'bg-green-500 hover:bg-green-600 text-white' 
-                                                    : 'bg-rose-500 hover:bg-rose-600 text-white' 
+                                                    : 'bg-purple-500 hover:bg-purple-600 text-white' 
                                                 }
                                             `}
                                         >
@@ -567,7 +537,6 @@ END:VCALENDAR`;
                                             )}
                                         </button>
                                     </div>
-                                    {/* FIM DA CHAVE PIX COM BOTÃO */}
 
                                     <p className="text-sm text-gray-500 mt-3 text-center">
                                         <strong>Favorecido:</strong> Stefanny ou Dhiego
@@ -579,13 +548,13 @@ END:VCALENDAR`;
                             )}
                         </div>
 
-                          <div className="bg-white rounded-3xl shadow-xl p-6 text-center">
+                        <div className="bg-white rounded-3xl shadow-xl p-6 text-center">
                             <button
                                 onClick={handleConfirm}
                                 className={`w-full py-4 rounded-full text-lg font-semibold transition-all transform hover:scale-105 ${
                                     confirmed
                                         ? 'bg-green-500 text-white'
-                                        : 'bg-rose-500 hover:bg-rose-600 text-white'
+                                        : 'bg-purple-500 hover:bg-purple-600 text-white'
                                 }`}
                             >
                                 {confirmed ? (
@@ -608,4 +577,4 @@ END:VCALENDAR`;
         ReactDOM.render(<ChaDePanelaInvite />, document.getElementById('root'));
     </script>
 </body>
-    </html>
+</html>
