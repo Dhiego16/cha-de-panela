@@ -17,68 +17,52 @@
     <meta property="og:url" content="https://dhiego16.github.io/cha-de-panela/" />
     <style>
         @keyframes float {
-            0% {
-                transform: translateY(0) rotate(0deg);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100vh) rotate(360deg);
-                opacity: 0;
-            }
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
         }
         @keyframes fall {
-            0% {
-                transform: translateY(-10vh) rotate(0deg);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(110vh) rotate(360deg);
-                opacity: 0.5;
-            }
+            0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(360deg); opacity: 0.5; }
         }
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .animate-float {
-            animation: float 4s ease-in-out forwards;
-        }
-        .animate-fall {
-            animation: fall 5s linear forwards;
-        }
-        .animate-fadeIn {
-            animation: fadeIn 0.6s ease-out;
-        }
-        .delay-1 {
-            animation-delay: 0.2s;
-        }
-        .delay-2 {
-            animation-delay: 0.4s;
-        }
+        .animate-float { animation: float 4s ease-in-out forwards; }
+        .animate-fall { animation: fall 5s linear forwards; }
+        .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
+        .delay-1 { animation-delay: 0.2s; }
+        .delay-2 { animation-delay: 0.4s; }
     </style>
 </head>
 <body>
     <div id="root"></div>
     
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB7gOx0_DC-IJCUsiP628Vo7enjxgkMuWU",
+            authDomain: "cha-panela-stefanny-dhiego.firebaseapp.com",
+            databaseURL: "https://cha-panela-stefanny-dhiego-default-rtdb.firebaseio.com",
+            projectId: "cha-panela-stefanny-dhiego",
+            storageBucket: "cha-panela-stefanny-dhiego.firebasestorage.app",
+            messagingSenderId: "879933812057",
+            appId: "1:879933812057:web:7390a03cd869a768cbf048"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        window.firebaseDB = database;
+        window.firebaseRef = ref;
+        window.firebaseSet = set;
+        window.firebaseOnValue = onValue;
+    </script>
+    
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
-        
-        const Heart = () => <span>❤️</span>;
-        const MapPin = () => <span>📍</span>;
-        const Calendar = () => <span>📅</span>;
-        const Clock = () => <span>🕐</span>;
-        const Gift = () => <span>🎁</span>;
-        const Check = () => <span>✓</span>;
-        const Music = ({ className }) => <span className={className}>🎵</span>;
-        const DollarSign = () => <span>💰</span>;
-        const Navigation = () => <span>🧭</span>;
-        const Copy = () => <span>📋</span>;
 
         function ChaDePanelaInvite() {
             const [isOpen, setIsOpen] = useState(false);
@@ -86,148 +70,168 @@
             const [flowers, setFlowers] = useState([]);
             const [confirmed, setConfirmed] = useState(false);
             const [selectedGift, setSelectedGift] = useState(null);
-            const [message, setMessage] = useState('');
             const [isPlaying, setIsPlaying] = useState(false);
             const [showPix, setShowPix] = useState(false);
-            const [pixCopied, setPixCopied] = useState(false); 
+            const [pixCopied, setPixCopied] = useState(false);
+            const [reservedGifts, setReservedGifts] = useState({});
+            const [loadingGifts, setLoadingGifts] = useState(true);
+            const [weather, setWeather] = useState(null);
+            const [loadingWeather, setLoadingWeather] = useState(true);
+            const [showThankYou, setShowThankYou] = useState(false);
+            const [guestName, setGuestName] = useState('');
             const audioRef = useRef(null);
 
-            const toggleMusic = () => {
-                if (audioRef.current) {
-                    if (isPlaying) {
-                        audioRef.current.pause();
-                    } else {
-                        audioRef.current.play();
-                    }
-                    setIsPlaying(!isPlaying);
-                }
-            };
+            const gifts = [
+                { id: 'panelas', name: 'Jogo de panelas', emoji: '🍳' },
+                { id: 'facas', name: 'Jogo de facas', emoji: '🔪' },
+                { id: 'cama', name: 'Jogo de Cama', emoji: '🛏️' },
+                { id: 'batedeira', name: 'Batedeira', emoji: '🥄' },
+                { id: 'pratos', name: 'Jogo de pratos', emoji: '🍽️' },
+                { id: 'copos', name: 'Jogo de copos', emoji: '🥤' },
+                { id: 'potes', name: 'Conjunto de potes', emoji: '🫙' },
+                { id: 'tabua', name: 'Tábua de corte', emoji: '🪵' },
+                { id: 'chaleira', name: 'Chaleira', emoji: '🫖' },
+                { id: 'frigideira', name: 'Frigideira', emoji: '🍳' },
+                { id: 'assadeiras', name: 'Assadeiras', emoji: '🥘' },
+                { id: 'forma', name: 'Forma de bolo', emoji: '🎂' }
+            ];
 
             useEffect(() => {
                 if (isOpen && audioRef.current) {
                     audioRef.current.currentTime = 60;
-                    audioRef.current.play()
-                        .then(() => setIsPlaying(true))
-                        .catch(err => console.log('Autoplay bloqueado pelo navegador'));
+                    audioRef.current.play().then(() => setIsPlaying(true)).catch(err => console.log('Autoplay bloqueado'));
                 }
             }, [isOpen]);
 
-            const eventDate = new Date('2026-02-14T17:00:00');
-            const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
-
-            function calculateTimeLeft() {
-                const difference = eventDate - new Date();
-                if (difference > 0) {
-                    return {
-                        dias: Math.floor(difference / (1000 * 60 * 60 * 24)),
-                        horas: Math.floor((difference / (1000 * 60 * 60)) % 24),
-                        minutos: Math.floor((difference / 1000 / 60) % 60)
-                    };
+            useEffect(() => {
+                if (isOpen) {
+                    const giftsRef = window.firebaseRef(window.firebaseDB, 'reserved-gifts');
+                    window.firebaseOnValue(giftsRef, (snapshot) => {
+                        setReservedGifts(snapshot.val() || {});
+                        setLoadingGifts(false);
+                    });
                 }
-                return null;
-            }
+            }, [isOpen]);
 
             useEffect(() => {
-                const timer = setInterval(() => {
-                    setTimeLeft(calculateTimeLeft());
-                }, 60000);
-                return () => clearInterval(timer);
-            }, []);
+                if (isOpen) {
+                    fetch('https://api.open-meteo.com/v1/forecast?latitude=-16.7072&longitude=-49.0919&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode&timezone=America/Sao_Paulo&forecast_days=16')
+                        .then(r => r.json())
+                        .then(data => {
+                            const idx = data.daily.time.indexOf('2026-02-14');
+                            if (idx !== -1) {
+                                setWeather({
+                                    maxTemp: Math.round(data.daily.temperature_2m_max[idx]),
+                                    minTemp: Math.round(data.daily.temperature_2m_min[idx]),
+                                    precipitation: data.daily.precipitation_probability_max[idx],
+                                    weatherCode: data.daily.weathercode[idx]
+                                });
+                            }
+                        })
+                        .catch(() => {})
+                        .finally(() => setLoadingWeather(false));
+                }
+            }, [isOpen]);
 
             useEffect(() => {
                 const interval = setInterval(() => {
-                    setHearts(prev => [...prev, {
-                        id: Math.random(),
-                        left: Math.random() * 100,
-                        delay: Math.random() * 2
-                    }]);
+                    setHearts(prev => [...prev, { id: Math.random(), left: Math.random() * 100, delay: Math.random() * 2 }]);
                 }, 800);
-
                 const cleanup = setTimeout(() => clearInterval(interval), 5000);
-                return () => {
-                    clearInterval(interval);
-                    clearTimeout(cleanup);
-                };
+                return () => { clearInterval(interval); clearTimeout(cleanup); };
             }, [isOpen]);
 
             useEffect(() => {
                 const interval = setInterval(() => {
-                    setFlowers(prev => [...prev, {
-                        id: Math.random(),
-                        left: Math.random() * 100,
-                        delay: Math.random() * 2,
-                        flower: ['🌸', '🌺', '🌼', '🌷'][Math.floor(Math.random() * 4)]
-                    }]);
+                    setFlowers(prev => [...prev, { id: Math.random(), left: Math.random() * 100, delay: Math.random() * 2, flower: ['🌸', '🌺', '🌼', '🌷'][Math.floor(Math.random() * 4)] }]);
                 }, 1200);
-
                 const cleanup = setTimeout(() => clearInterval(interval), 6000);
-                return () => {
-                    clearInterval(interval);
-                    clearTimeout(cleanup);
-                };
+                return () => { clearInterval(interval); clearTimeout(cleanup); };
             }, [isOpen]);
 
             useEffect(() => {
                 if (hearts.length > 0) {
-                    const timeout = setTimeout(() => {
-                        setHearts(prev => prev.slice(1));
-                    }, 4000);
+                    const timeout = setTimeout(() => setHearts(prev => prev.slice(1)), 4000);
                     return () => clearTimeout(timeout);
                 }
             }, [hearts]);
 
             useEffect(() => {
                 if (flowers.length > 0) {
-                    const timeout = setTimeout(() => {
-                        setFlowers(prev => prev.slice(1));
-                    }, 5000);
+                    const timeout = setTimeout(() => setFlowers(prev => prev.slice(1)), 5000);
                     return () => clearTimeout(timeout);
                 }
             }, [flowers]);
 
-            const copyPixKey = async () => {
-                const pixKey = "00020126580014BR.GOV.BCB.PIX0136907ff8c6-32fc-45e1-b013-f33bbffc73895204000053039865802BR5921Dhiego Rodrigues Dias6009SAO PAULO621405100h9jlWZlEi63041190";
+            const [timeLeft, setTimeLeft] = useState(null);
+
+            useEffect(() => {
+                const calc = () => {
+                    const diff = new Date('2026-02-14T17:00:00') - new Date();
+                    if (diff > 0) {
+                        setTimeLeft({
+                            dias: Math.floor(diff / (1000 * 60 * 60 * 24)),
+                            horas: Math.floor((diff / (1000 * 60 * 60)) % 24),
+                            minutos: Math.floor((diff / 1000 / 60) % 60)
+                        });
+                    }
+                };
+                calc();
+                const timer = setInterval(calc, 60000);
+                return () => clearInterval(timer);
+            }, []);
+
+            const handleReserveGift = async (gift) => {
+                if (reservedGifts[gift.id]) {
+                    alert('Este presente já foi reservado por outro convidado!');
+                    return;
+                }
+                const name = prompt('Digite seu nome para reservar este presente:');
+                if (!name || name.trim() === '') return;
+
                 try {
-                    await navigator.clipboard.writeText(pixKey);
-                    setPixCopied(true);
-                    setTimeout(() => setPixCopied(false), 2000); 
-                } catch (err) {
-                    console.error('Falha ao copiar texto: ', err);
-                    alert('Erro ao copiar a chave. Por favor, copie manualmente.');
+                    const giftRef = window.firebaseRef(window.firebaseDB, `reserved-gifts/${gift.id}`);
+                    await window.firebaseSet(giftRef, name.trim());
+                    setSelectedGift(gift.name);
+                    alert(`Presente "${gift.name}" reservado com sucesso! 🎁`);
+                } catch (error) {
+                    alert('Erro ao reservar presente. Tente novamente.');
                 }
             };
 
-            const gifts = [
-                'Jogo de panelas',
-                'Jogo de facas',
-                'Jogo de Cama',
-                'Batedeira',
-                'Jogo de pratos',
-                'Jogo de copos',
-                'Conjunto de potes',
-                'Tábua de corte',
-                'Chaleira',
-                'Frigideira',
-                'Assadeiras',
-                'Forma de bolo'
-            ];
-
             const handleConfirm = () => {
-                const gift = selectedGift ? selectedGift : 'Nenhum presente selecionado ainda';
-                const userMessage = message ? `\n\nMensagem: ${message}` : '';
-                const whatsappMessage = `Olá! Confirmo minha presença no Chá de Panela da Stefanny & Dhiego! 🎉\n\nPresente escolhido: ${gift}${userMessage}\n\nNos vemos dia 14/02/2026! 💕`;
-                const whatsappUrl = `https://wa.me/5562995483241?text=${encodeURIComponent(whatsappMessage)}`;
+                const name = prompt('Digite seu nome para confirmar presença:');
+                if (!name || name.trim() === '') return;
+
+                setGuestName(name.trim());
+                const gift = selectedGift || 'Nenhum presente selecionado ainda';
+                const msg = `Olá! Sou ${name.trim()} e confirmo minha presença no Chá de Panela da Stefanny & Dhiego! 🎉\n\nPresente escolhido: ${gift}\n\nNos vemos dia 14/02/2026! 💕`;
                 
                 setConfirmed(true);
+                setShowThankYou(true);
+                
                 setTimeout(() => {
-                    window.open(whatsappUrl, '_blank');
+                    window.open(`https://wa.me/5562995483241?text=${encodeURIComponent(msg)}`, '_blank');
                     setConfirmed(false);
                 }, 1000);
             };
 
-            const handleOpenMaps = () => {
-                const mapsUrl = 'https://maps.app.goo.gl/vcshqsjwYWUnmFJY6';
-                window.open(mapsUrl, '_blank');
+            const getWeatherIcon = (code) => {
+                if (code === 0) return '☀️';
+                if (code <= 3) return '⛅';
+                if (code <= 67) return '🌧️';
+                if (code <= 77) return '🌨️';
+                if (code <= 82) return '🌧️';
+                return '⛈️';
+            };
+
+            const getWeatherDesc = (code) => {
+                if (code === 0) return 'Céu limpo';
+                if (code <= 3) return 'Parcialmente nublado';
+                if (code <= 67) return 'Chuva';
+                if (code <= 77) return 'Neve';
+                if (code <= 82) return 'Chuva forte';
+                return 'Tempestade';
             };
 
             if (!isOpen) {
@@ -257,18 +261,11 @@
                             </div>
                             
                             <div className="mb-6 bg-purple-50 border-2 border-purple-200 rounded-lg p-4">
-                                <p className="text-sm text-purple-700 font-semibold">
-                                    ⚠️ Atenção: Convite individual ou por casal
-                                </p>
-                                <p className="text-xs text-gray-600 mt-1">
-                                    Por favor, não leve convidados adicionais
-                                </p>
+                                <p className="text-sm text-purple-700 font-semibold">⚠️ Atenção: Convite individual ou por casal</p>
+                                <p className="text-xs text-gray-600 mt-1">Por favor, não leve convidados adicionais</p>
                             </div>
                             
-                            <button
-                                onClick={() => setIsOpen(true)}
-                                className="bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white px-10 py-4 rounded-full text-xl font-semibold shadow-xl transform hover:scale-110 transition-all duration-300 w-full"
-                            >
+                            <button onClick={() => setIsOpen(true)} className="bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white px-10 py-4 rounded-full text-xl font-semibold shadow-xl transform hover:scale-110 transition-all duration-300 w-full">
                                 ✨ Abrir Convite ✨
                             </button>
                             
@@ -284,61 +281,30 @@
 
             return (
                 <div className="min-h-screen bg-gradient-to-br from-purple-100 via-violet-50 to-purple-100 relative overflow-hidden">
-                    <audio ref={audioRef} loop>
-                        <source src="Perfect.mp3" type="audio/mpeg" />
-                        Seu navegador não suporta áudio.
-                    </audio>
+                    <audio ref={audioRef} loop><source src="Perfect.mp3" type="audio/mpeg" /></audio>
 
-                    {hearts.map(heart => (
-                        <div
-                            key={heart.id}
-                            className="absolute bottom-0 text-purple-400 animate-float"
-                            style={{
-                                left: `${heart.left}%`,
-                                animationDelay: `${heart.delay}s`,
-                                fontSize: '24px'
-                            }}
-                        >
-                            ❤️
-                        </div>
+                    {hearts.map(h => (
+                        <div key={h.id} className="absolute bottom-0 text-purple-400 animate-float" style={{ left: `${h.left}%`, animationDelay: `${h.delay}s`, fontSize: '24px' }}>❤️</div>
                     ))}
 
-                    {flowers.map(flower => (
-                        <div
-                            key={flower.id}
-                            className="absolute top-0 animate-fall"
-                            style={{
-                                left: `${flower.left}%`,
-                                animationDelay: `${flower.delay}s`,
-                                fontSize: '28px'
-                            }}
-                        >
-                            {flower.flower}
-                        </div>
+                    {flowers.map(f => (
+                        <div key={f.id} className="absolute top-0 animate-fall" style={{ left: `${f.left}%`, animationDelay: `${f.delay}s`, fontSize: '28px' }}>{f.flower}</div>
                     ))}
 
                     <div className="container mx-auto px-4 py-8 max-w-2xl relative z-10">
                         <div className="bg-white rounded-3xl shadow-2xl p-8 mb-6 text-center animate-fadeIn relative">
-                            <button
-                                onClick={toggleMusic}
-                                className="absolute top-4 right-4 bg-purple-100 hover:bg-purple-200 p-3 rounded-full transition-all"
-                                title={isPlaying ? 'Pausar música' : 'Tocar música'}
-                            >
-                                <Music className={isPlaying ? 'animate-pulse' : ''} />
+                            <button onClick={() => { if (audioRef.current) { isPlaying ? audioRef.current.pause() : audioRef.current.play(); setIsPlaying(!isPlaying); }}} className="absolute top-4 right-4 bg-purple-100 hover:bg-purple-200 p-3 rounded-full transition-all">
+                                <span className={isPlaying ? 'animate-pulse' : ''}>🎵</span>
                             </button>
                             
                             <div className="text-6xl mb-4">👰🏻‍♀️🤵🏻</div>
                             <h1 className="text-4xl font-bold text-purple-600 mb-2">Chá de Panela</h1>
                             <h2 className="text-2xl text-gray-700 mb-4">Stefanny & Dhiego</h2>
-                            <p className="text-gray-600 italic">
-                                "O amor está nos detalhes... e nas panelas que vamos usar juntos!"
-                            </p>
+                            <p className="text-gray-600 italic">"O amor está nos detalhes... e nas panelas que vamos usar juntos!"</p>
                         </div>
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">
-                                <Heart /> Nossa História
-                            </h3>
+                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">❤️ Nossa História</h3>
                             <p className="text-gray-600 leading-relaxed mb-4">
                                 Tudo começou com um olhar... depois vieram os sorrisos, as conversas que não queriam terminar, 
                                 e aquele sentimento de ter encontrado alguém especial. Agora estamos prontos para começar 
@@ -351,45 +317,27 @@
                         </div>
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">
-                               
-                            </h3>
                             <div className="rounded-2xl overflow-hidden shadow-lg">
-                                <video 
-                                    autoPlay
-                                    loop
-                                    muted
-                                    playsInline
-                                    className="w-full"
-                                >
+                                <video autoPlay loop muted playsInline className="w-full">
                                     <source src="video.mp4" type="video/mp4" />
-                                    Seu navegador não suporta vídeos.
                                 </video>
                             </div>
                         </div>
 
                         {timeLeft && (
                             <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-                                <h3 className="text-center text-xl font-semibold text-purple-600 mb-4">
-                                    Contagem Regressiva
-                                </h3>
+                                <h3 className="text-center text-xl font-semibold text-purple-600 mb-4">Contagem Regressiva</h3>
                                 <div className="flex justify-center gap-4">
                                     <div className="text-center">
-                                        <div className="bg-purple-500 text-white rounded-lg p-4 text-3xl font-bold">
-                                            {timeLeft.dias}
-                                        </div>
+                                        <div className="bg-purple-500 text-white rounded-lg p-4 text-3xl font-bold">{timeLeft.dias}</div>
                                         <div className="text-sm text-gray-600 mt-2">dias</div>
                                     </div>
                                     <div className="text-center">
-                                        <div className="bg-purple-500 text-white rounded-lg p-4 text-3xl font-bold">
-                                            {timeLeft.horas}
-                                        </div>
+                                        <div className="bg-purple-500 text-white rounded-lg p-4 text-3xl font-bold">{timeLeft.horas}</div>
                                         <div className="text-sm text-gray-600 mt-2">horas</div>
                                     </div>
                                     <div className="text-center">
-                                        <div className="bg-purple-500 text-white rounded-lg p-4 text-3xl font-bold">
-                                            {timeLeft.minutos}
-                                        </div>
+                                        <div className="bg-purple-500 text-white rounded-lg p-4 text-3xl font-bold">{timeLeft.minutos}</div>
                                         <div className="text-sm text-gray-600 mt-2">min</div>
                                     </div>
                                 </div>
@@ -397,26 +345,18 @@
                         )}
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">
-                                <Calendar /> Detalhes do Evento
-                            </h3>
+                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">📅 Detalhes do Evento</h3>
                             <div className="space-y-3">
                                 <div className="flex items-start gap-3">
-                                    <Calendar />
-                                    <div>
-                                        <p className="font-semibold">Data</p>
-                                        <p className="text-gray-600">Sábado, 14 de Fevereiro de 2026</p>
-                                    </div>
+                                    <span>📅</span>
+                                    <div><p className="font-semibold">Data</p><p className="text-gray-600">Sábado, 14 de Fevereiro de 2026</p></div>
                                 </div>
                                 <div className="flex items-start gap-3">
-                                    <Clock />
-                                    <div>
-                                        <p className="font-semibold">Horário</p>
-                                        <p className="text-gray-600">17:00h</p>
-                                    </div>
+                                    <span>🕐</span>
+                                    <div><p className="font-semibold">Horário</p><p className="text-gray-600">17:00h</p></div>
                                 </div>
                                 <div className="flex items-start gap-3">
-                                    <MapPin />
+                                    <span>📍</span>
                                     <div className="flex-1">
                                         <p className="font-semibold">Local</p>
                                         <p className="text-gray-600">Espaço Esquina do Paraiso</p>
@@ -425,149 +365,147 @@
                                 </div>
                             </div>
 
-                            <button
-                                onClick={handleOpenMaps}
-                                className="w-full mt-4 bg-purple-100 hover:bg-purple-200 text-purple-600 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all"
-                            >
-                                <Navigation /> Abrir no Google Maps
+                            <button onClick={() => window.open('https://maps.app.goo.gl/vcshqsjwYWUnmFJY6', '_blank')} className="w-full mt-4 bg-purple-100 hover:bg-purple-200 text-purple-600 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all">
+                                🧭 Abrir no Google Maps
                             </button>
 
-                            <button
-                                onClick={() => {
-                                    const start = '20260214T170000Z';
-                                    const end = '20260214T210000Z';
-                                    const title = 'Chá de Panela - Stefanny & Dhiego';
-                                    const details = 'Chá de Panela da Stefanny e Dhiego';
-                                    const location = 'Espaço Esquina do Paraiso - Res. Paraiso 2';
-
-                                    const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${start}/${end}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}`;
-
-                                    window.open(url, '_blank');
-                                }}
-                                className="w-full mt-2 bg-violet-100 hover:bg-violet-200 text-violet-600 py-3 rounded-lg font-semibold transition-all"
-                            >
+                            <button onClick={() => {
+                                const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Chá de Panela - Stefanny & Dhiego')}&dates=20260214T170000Z/20260214T210000Z&details=${encodeURIComponent('Chá de Panela da Stefanny e Dhiego')}&location=${encodeURIComponent('Espaço Esquina do Paraiso - Res. Paraiso 2')}`;
+                                window.open(url, '_blank');
+                            }} className="w-full mt-2 bg-violet-100 hover:bg-violet-200 text-violet-600 py-3 rounded-lg font-semibold transition-all">
                                 📅 Adicionar a Agenda
                             </button>
                         </div>
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-                            <h3 className="text-xl font-semibold text-purple-600 mb-4">
-                                👗 Dress Code
-                            </h3>
-                            <p className="text-gray-600">
-                                <strong>Cores sugeridas:</strong> Branco e Lilás
-                            </p>
-                            <p className="text-gray-600 mt-2">
-                                <strong>Estilo:</strong> Social ou semi-formal
-                            </p>
-                            <p className="text-sm text-gray-500 mt-3 italic">
-                                Vista-se com conforto e alegria! O mais importante é sua presença! 💕
-                            </p>
+                            <h3 className="text-xl font-semibold text-purple-600 mb-4">👗 Dress Code</h3>
+                            <p className="text-gray-600"><strong>Cores sugeridas:</strong> Branco e Lilás</p>
+                            <p className="text-gray-600 mt-2"><strong>Estilo:</strong> Social ou semi-formal</p>
+                            <p className="text-sm text-gray-500 mt-3 italic">Vista-se com conforto e alegria! O mais importante é sua presença! 💕</p>
                         </div>
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">
-                                <Gift /> Sugestões de Presentes
-                            </h3>
-                            <div className="grid grid-cols-2 gap-3">
-                                {gifts.map((gift, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => setSelectedGift(selectedGift === gift ? null : gift)}
-                                        className={`p-3 rounded-lg border-2 text-left transition-all ${
-                                            selectedGift === gift
-                                                ? 'border-purple-500 bg-purple-50'
-                                                : 'border-gray-200 hover:border-purple-300'
-                                        }`}
-                                    >
-                                        <span className="text-2xl mr-2">🎁</span>
-                                        <span className="text-sm">{gift}</span>
-                                    </button>
-                                ))}
-                            </div>
-                            {selectedGift && (
-                                <p className="mt-4 text-center text-purple-600 font-semibold">
-                                    Você selecionou: {selectedGift}
-                                </p>
+                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">🎁 Sugestões de Presentes</h3>
+                            {loadingGifts ? (
+                                <div className="text-center py-8 text-gray-500">Carregando lista de presentes...</div>
+                            ) : (
+                                <>
+                                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <p className="text-sm text-blue-700"><strong>💡 Dica:</strong> Clique no presente para reservá-lo e evitar duplicatas!</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {gifts.map((gift) => {
+                                            const isReserved = reservedGifts[gift.id];
+                                            const isSelected = selectedGift === gift.name;
+                                            
+                                            return (
+                                                <button key={gift.id} onClick={() => handleReserveGift(gift)} disabled={isReserved} className={`p-3 rounded-lg border-2 text-left transition-all relative ${isReserved ? 'border-gray-300 bg-gray-100 opacity-60 cursor-not-allowed' : isSelected ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'}`}>
+                                                    <div className="flex items-start gap-2">
+                                                        <span className="text-2xl">{gift.emoji}</span>
+                                                        <div className="flex-1">
+                                                            <span className="text-sm block">{gift.name}</span>
+                                                            {isReserved && <span className="text-xs text-gray-500 mt-1 block">Reservado por {isReserved}</span>}
+                                                        </div>
+                                                        {isReserved && <span className="text-green-500 text-lg">✓</span>}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    {selectedGift && <p className="mt-4 text-center text-purple-600 font-semibold">Você selecionou: {selectedGift}</p>}
+                                </>
                             )}
                         </div>
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">
-                                <DollarSign /> Prefere Contribuir via PIX?
-                            </h3>
-                            <p className="text-gray-600 mb-4">
-                                Se preferir, você pode fazer uma contribuição em dinheiro para ajudar a mobiliar nosso lar!
-                            </p>
-                            <button
-                                onClick={() => setShowPix(!showPix)}
-                                className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold transition-all"
-                            >
+                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">☀️ Previsão do Tempo</h3>
+                            {loadingWeather ? (
+                                <div className="text-center py-8 text-gray-500"><div className="text-4xl mb-3">⏳</div>Carregando previsão do tempo...</div>
+                            ) : weather ? (
+                                <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-4">
+                                    <p className="text-center text-2xl mb-2">{getWeatherIcon(weather.weatherCode)}</p>
+                                    <p className="text-center font-semibold text-gray-700 mb-3">{getWeatherDesc(weather.weatherCode)}</p>
+                                    <div className="flex justify-center gap-6 mb-2">
+                                        <div className="text-center">
+                                            <p className="text-sm text-gray-600">Máxima</p>
+                                            <p className="text-2xl font-bold text-orange-500">{weather.maxTemp}°C</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-sm text-gray-600">Mínima</p>
+                                            <p className="text-2xl font-bold text-blue-500">{weather.minTemp}°C</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-center text-sm text-gray-600 mt-3">Chance de chuva: {weather.precipitation}%</p>
+                                    <p className="text-xs text-gray-500 text-center mt-3 italic">Previsão para 14/02/2026 em Senador Canedo</p>
+                                </div>
+                            ) : (
+                                <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-4 text-center">
+                                    <p className="text-4xl mb-3">🌤️</p>
+                                    <p className="text-gray-600 mb-2">A previsão do tempo estará disponível mais próximo da data do evento!</p>
+                                    <p className="text-sm text-gray-500 italic">Volte em janeiro de 2026 para conferir 😊</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
+                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">💰 Prefere Contribuir via PIX?</h3>
+                            <p className="text-gray-600 mb-4">Se preferir, você pode fazer uma contribuição em dinheiro para ajudar a mobiliar nosso lar!</p>
+                            <button onClick={() => setShowPix(!showPix)} className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold transition-all">
                                 {showPix ? 'Ocultar QR Code PIX' : 'Ver QR Code PIX'}
                             </button>
                             {showPix && (
                                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                                     <div className="bg-white p-4 rounded-lg border-2 border-gray-200 flex items-center justify-center mb-4">
-                                        <img 
-                                            src="qrcode-pix.png" 
-                                            alt="QR Code PIX" 
-                                            className="w-64 h-64 object-contain"
-                                        />
+                                        <img src="qrcode-pix.png" alt="QR Code PIX" className="w-64 h-64 object-contain" />
                                     </div>
                                     <p className="text-sm text-gray-600 mb-2 text-center"><strong>PIX COPIA E COLA:</strong></p>
                                     
-                                    <div className="flex items-stretch gap-2"> 
+                                    <div className="flex items-stretch gap-2">
                                         <p className="text-xs font-mono bg-white p-3 rounded border border-gray-200 text-center flex-grow break-all">
                                             00020126580014BR.GOV.BCB.PIX0136907ff8c6-32fc-45e1-b013-f33bbffc73895204000053039865802BR5921Dhiego Rodrigues Dias6009SAO PAULO621405100h9jlWZlEi63041190
                                         </p>
-                                        <button
-                                            onClick={copyPixKey}
-                                            className={`
-                                                p-3 rounded-lg font-semibold transition-all flex-shrink-0 flex items-center justify-center
-                                                ${pixCopied 
-                                                    ? 'bg-green-500 hover:bg-green-600 text-white' 
-                                                    : 'bg-purple-500 hover:bg-purple-600 text-white' 
-                                                }
-                                            `}
-                                        >
-                                            {pixCopied ? (
-                                                <span className="flex items-center gap-1"><Check /> Copiado!</span>
-                                            ) : (
-                                                <Copy />
-                                            )}
+                                        <button onClick={async () => {
+                                            try {
+                                                await navigator.clipboard.writeText("00020126580014BR.GOV.BCB.PIX0136907ff8c6-32fc-45e1-b013-f33bbffc73895204000053039865802BR5921Dhiego Rodrigues Dias6009SAO PAULO621405100h9jlWZlEi63041190");
+                                                setPixCopied(true);
+                                                setTimeout(() => setPixCopied(false), 2000);
+                                            } catch (err) {
+                                                alert('Erro ao copiar a chave. Por favor, copie manualmente.');
+                                            }
+                                        }} className={`p-3 rounded-lg font-semibold transition-all flex-shrink-0 flex items-center justify-center ${pixCopied ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}>
+                                            {pixCopied ? <span className="flex items-center gap-1">✓ Copiado!</span> : <span>📋</span>}
                                         </button>
                                     </div>
 
-                                    <p className="text-sm text-gray-500 mt-3 text-center">
-                                        <strong>Favorecido:</strong> Stefanny ou Dhiego
-                                    </p>
-                                    <p className="text-xs text-gray-400 mt-3 text-center italic">
-                                        💕 Sua contribuição nos ajuda a construir nosso lar!
-                                    </p>
+                                    <p className="text-sm text-gray-500 mt-3 text-center"><strong>Favorecido:</strong> Stefanny ou Dhiego</p>
+                                    <p className="text-xs text-gray-400 mt-3 text-center italic">💕 Sua contribuição nos ajuda a construir nosso lar!</p>
                                 </div>
                             )}
                         </div>
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 text-center">
-                            <button
-                                onClick={handleConfirm}
-                                className={`w-full py-4 rounded-full text-lg font-semibold transition-all transform hover:scale-105 ${
-                                    confirmed
-                                        ? 'bg-green-500 text-white'
-                                        : 'bg-purple-500 hover:bg-purple-600 text-white'
-                                }`}
-                            >
-                                {confirmed ? (
-                                    <span className="flex items-center justify-center gap-2">
-                                        <Check /> Presença Confirmada!
-                                    </span>
-                                ) : (
-                                    'Confirmar Presença'
-                                )}
-                            </button>
-                            <p className="text-sm text-gray-500 mt-4">
-                                Contato: (62) 99548-3241
-                            </p>
+                            {showThankYou ? (
+                                <div className="animate-fadeIn">
+                                    <div className="text-6xl mb-4">💕</div>
+                                    <h3 className="text-2xl font-bold text-purple-600 mb-3">Obrigado, {guestName}!</h3>
+                                    <p className="text-gray-600 mb-4">Ficamos muito felizes com sua confirmação! Sua presença é muito importante para nós.</p>
+                                    <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-4 mb-4">
+                                        <p className="text-sm text-purple-700">Mal podemos esperar para celebrar esse momento especial com você!</p>
+                                        <p className="text-sm text-purple-700 mt-2">Até breve! ✨</p>
+                                    </div>
+                                    <div className="flex justify-center gap-2 mb-4">
+                                        <span className="text-2xl animate-bounce">❤️</span>
+                                        <span className="text-2xl animate-bounce delay-1">❤️</span>
+                                        <span className="text-2xl animate-bounce delay-2">❤️</span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 italic">- Stefanny & Dhiego</p>
+                                </div>
+                            ) : (
+                                <button onClick={handleConfirm} className={`w-full py-4 rounded-full text-lg font-semibold transition-all transform hover:scale-105 ${confirmed ? 'bg-green-500 text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}>
+                                    {confirmed ? <span className="flex items-center justify-center gap-2">✓ Presença Confirmada!</span> : 'Confirmar Presença'}
+                                </button>
+                            )}
+                            <p className="text-sm text-gray-500 mt-4">Contato: (62) 99548-3241</p>
                         </div>
                     </div>
                 </div>
