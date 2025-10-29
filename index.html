@@ -28,9 +28,19 @@
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes bounce-arrow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(10px); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4); }
+            50% { box-shadow: 0 0 20px 10px rgba(168, 85, 247, 0); }
+        }
         .animate-float { animation: float 4s ease-in-out forwards; }
         .animate-fall { animation: fall 5s linear forwards; }
         .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
+        .animate-bounce-arrow { animation: bounce-arrow 2s ease-in-out infinite; }
+        .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
         .delay-1 { animation-delay: 0.2s; }
         .delay-2 { animation-delay: 0.4s; }
     </style>
@@ -79,7 +89,12 @@
             const [loadingWeather, setLoadingWeather] = useState(true);
             const [showThankYou, setShowThankYou] = useState(false);
             const [guestName, setGuestName] = useState('');
+            const [showScrollArrow, setShowScrollArrow] = useState(true);
+            const [showTopBar, setShowTopBar] = useState(false);
             const audioRef = useRef(null);
+            const detailsRef = useRef(null);
+            const giftsRef = useRef(null);
+            const confirmRef = useRef(null);
 
             const gifts = [
                 { id: 'panelas', name: 'Jogo de panelas', emoji: '🍳' },
@@ -100,6 +115,27 @@
                 if (isOpen && audioRef.current) {
                     audioRef.current.currentTime = 60;
                     audioRef.current.play().then(() => setIsPlaying(true)).catch(err => console.log('Autoplay bloqueado'));
+                }
+            }, [isOpen]);
+
+            useEffect(() => {
+                const handleScroll = () => {
+                    if (window.scrollY > 300) {
+                        setShowScrollArrow(false);
+                    } else {
+                        setShowScrollArrow(true);
+                    }
+
+                    if (window.scrollY > 100) {
+                        setShowTopBar(true);
+                    } else {
+                        setShowTopBar(false);
+                    }
+                };
+                
+                if (isOpen) {
+                    window.addEventListener('scroll', handleScroll);
+                    return () => window.removeEventListener('scroll', handleScroll);
                 }
             }, [isOpen]);
 
@@ -134,6 +170,7 @@
             }, [isOpen]);
 
             useEffect(() => {
+                if (!isOpen) return;
                 const interval = setInterval(() => {
                     setHearts(prev => [...prev, { id: Math.random(), left: Math.random() * 100, delay: Math.random() * 2 }]);
                 }, 800);
@@ -142,6 +179,7 @@
             }, [isOpen]);
 
             useEffect(() => {
+                if (!isOpen) return;
                 const interval = setInterval(() => {
                     setFlowers(prev => [...prev, { id: Math.random(), left: Math.random() * 100, delay: Math.random() * 2, flower: ['🌸', '🌺', '🌼', '🌷'][Math.floor(Math.random() * 4)] }]);
                 }, 1200);
@@ -234,13 +272,17 @@
                 return 'Tempestade';
             };
 
+            const scrollToSection = (ref) => {
+                ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+
             if (!isOpen) {
                 return (
                     <div className="min-h-screen bg-gradient-to-br from-purple-400 via-violet-300 to-purple-300 flex items-center justify-center p-4 relative overflow-hidden">
                         <div className="absolute top-10 left-10 text-6xl opacity-20 animate-pulse">💕</div>
                         <div className="absolute top-20 right-20 text-5xl opacity-20 animate-pulse delay-1">🎊</div>
                         <div className="absolute bottom-20 left-20 text-5xl opacity-20 animate-pulse delay-2">✨</div>
-                        <div className="absolute bottom-10 right-10 text-6xl opacity-20 animate-pulse">💝</div>
+                        <div className="absolute bottom-10 right-10 text-6xl opacity-20 animate-pulse">💍</div>
                         
                         <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-md text-center relative z-10 transform hover:scale-105 transition-all duration-300">
                             <div className="mb-6">
@@ -283,6 +325,19 @@
                 <div className="min-h-screen bg-gradient-to-br from-purple-100 via-violet-50 to-purple-100 relative overflow-hidden">
                     <audio ref={audioRef} loop><source src="Perfect.mp3" type="audio/mpeg" /></audio>
 
+                    {showTopBar && (
+                        <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-purple-600 to-violet-600 text-white py-3 px-4 shadow-lg z-50 animate-fadeIn">
+                            <div className="container mx-auto max-w-2xl flex items-center justify-between">
+                                <span className="text-sm font-semibold flex items-center gap-2">
+                                    ⚠️ Não esqueça de confirmar presença no final!
+                                </span>
+                                <button onClick={() => scrollToSection(confirmRef)} className="bg-white text-purple-600 px-4 py-1 rounded-full text-xs font-bold hover:scale-105 transition-transform">
+                                    IR AGORA
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {hearts.map(h => (
                         <div key={h.id} className="absolute bottom-0 text-purple-400 animate-float" style={{ left: `${h.left}%`, animationDelay: `${h.delay}s`, fontSize: '24px' }}>❤️</div>
                     ))}
@@ -291,7 +346,7 @@
                         <div key={f.id} className="absolute top-0 animate-fall" style={{ left: `${f.left}%`, animationDelay: `${f.delay}s`, fontSize: '28px' }}>{f.flower}</div>
                     ))}
 
-                    <div className="container mx-auto px-4 py-8 max-w-2xl relative z-10">
+                    <div className="container mx-auto px-4 py-8 max-w-2xl relative z-10" style={{ paddingTop: showTopBar ? '80px' : '32px' }}>
                         <div className="bg-white rounded-3xl shadow-2xl p-8 mb-6 text-center animate-fadeIn relative">
                             <button onClick={() => { if (audioRef.current) { isPlaying ? audioRef.current.pause() : audioRef.current.play(); setIsPlaying(!isPlaying); }}} className="absolute top-4 right-4 bg-purple-100 hover:bg-purple-200 p-3 rounded-full transition-all">
                                 <span className={isPlaying ? 'animate-pulse' : ''}>🎵</span>
@@ -302,6 +357,33 @@
                             <h2 className="text-2xl text-gray-700 mb-4">Stefanny & Dhiego</h2>
                             <p className="text-gray-600 italic">"O amor está nos detalhes... e nas panelas que vamos usar juntos!"</p>
                         </div>
+
+                        <div className="bg-white rounded-3xl shadow-xl p-4 mb-6 animate-fadeIn">
+                            <div className="grid grid-cols-3 gap-2">
+                                <button onClick={() => scrollToSection(detailsRef)} className="flex flex-col items-center justify-center p-3 rounded-xl bg-purple-50 hover:bg-purple-100 transition-all group">
+                                    <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">📅</span>
+                                    <span className="text-xs font-semibold text-purple-600">Data & Local</span>
+                                </button>
+                                <button onClick={() => scrollToSection(giftsRef)} className="flex flex-col items-center justify-center p-3 rounded-xl bg-violet-50 hover:bg-violet-100 transition-all group">
+                                    <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">🎁</span>
+                                    <span className="text-xs font-semibold text-violet-600">Presentes</span>
+                                </button>
+                                <button onClick={() => scrollToSection(confirmRef)} className="flex flex-col items-center justify-center p-3 rounded-xl bg-pink-50 hover:bg-pink-100 transition-all group animate-pulse-glow">
+                                    <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">✅</span>
+                                    <span className="text-xs font-semibold text-pink-600">Confirmar</span>
+                                </button>
+                            </div>
+                            <p className="text-xs text-gray-500 text-center mt-3">👆 Clique para ir direto à seção</p>
+                        </div>
+
+                        {showScrollArrow && (
+                            <div className="text-center mb-6 animate-fadeIn">
+                                <div className="animate-bounce-arrow inline-block">
+                                    <div className="text-purple-600 font-semibold text-sm mb-2">Role para ver mais</div>
+                                    <div className="text-4xl">⬇️</div>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
                             <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">❤️ Nossa História</h3>
@@ -344,7 +426,7 @@
                             </div>
                         )}
 
-                        <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
+                        <div ref={detailsRef} className="bg-white rounded-3xl shadow-xl p-6 mb-6">
                             <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">📅 Detalhes do Evento</h3>
                             <div className="space-y-3">
                                 <div className="flex items-start gap-3">
@@ -352,7 +434,7 @@
                                     <div><p className="font-semibold">Data</p><p className="text-gray-600">Sábado, 14 de Fevereiro de 2026</p></div>
                                 </div>
                                 <div className="flex items-start gap-3">
-                                    <span>🕐</span>
+                                    <span>🕔</span>
                                     <div><p className="font-semibold">Horário</p><p className="text-gray-600">17:00h</p></div>
                                 </div>
                                 <div className="flex items-start gap-3">
@@ -378,13 +460,14 @@
                         </div>
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-                            <h3 className="text-xl font-semibold text-purple-600 mb-4">👗 Dress Code</h3>
-                            <p className="text-gray-600"><strong>Cores sugeridas:</strong> Branco e Lilás</p>
-                            <p className="text-gray-600 mt-2"><strong>Estilo:</strong> Social ou semi-formal</p>
-                            <p className="text-sm text-gray-500 mt-3 italic">Vista-se com conforto e alegria! O mais importante é sua presença! 💕</p>
+                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">🹠Informação Importante</h3>
+                            <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4 text-center">
+                                <p className="text-lg font-semibold text-amber-700 mb-2">🥤 Leve Sua Bebida de Preferência!</p>
+                                <p className="text-sm text-gray-600">Teremos muita comida deliciosa, mas as bebidas ficam por sua conta! 😊</p>
+                            </div>
                         </div>
 
-                        <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
+                        <div ref={giftsRef} className="bg-white rounded-3xl shadow-xl p-6 mb-6">
                             <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">🎁 Sugestões de Presentes</h3>
                             {loadingGifts ? (
                                 <div className="text-center py-8 text-gray-500">Carregando lista de presentes...</div>
@@ -483,7 +566,7 @@
                             )}
                         </div>
 
-                        <div className="bg-white rounded-3xl shadow-xl p-6 text-center">
+                        <div ref={confirmRef} className="bg-white rounded-3xl shadow-xl p-6 text-center">
                             {showThankYou ? (
                                 <div className="animate-fadeIn">
                                     <div className="text-6xl mb-4">💕</div>
