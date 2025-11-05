@@ -36,13 +36,22 @@
             0%, 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4); }
             50% { box-shadow: 0 0 20px 10px rgba(168, 85, 247, 0); }
         }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
         .animate-float { animation: float 4s ease-in-out forwards; }
         .animate-fall { animation: fall 5s linear forwards; }
         .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
         .animate-bounce-arrow { animation: bounce-arrow 2s ease-in-out infinite; }
         .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+        .animate-spin { animation: spin 1s linear infinite; }
         .delay-1 { animation-delay: 0.2s; }
         .delay-2 { animation-delay: 0.4s; }
+        .modal-backdrop {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
     </style>
 </head>
 <body>
@@ -74,8 +83,33 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
+        function Modal({ isOpen, onClose, title, children }) {
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop" onClick={onClose}>
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fadeIn" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold text-purple-600">{title}</h3>
+                            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none" aria-label="Fechar">&times;</button>
+                        </div>
+                        {children}
+                    </div>
+                </div>
+            );
+        }
+
+        function LoadingSpinner() {
+            return (
+                <div className="flex items-center justify-center">
+                    <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+                </div>
+            );
+        }
+
         function ChaDePanelaInvite() {
             const [isOpen, setIsOpen] = useState(false);
+            const [isLoading, setIsLoading] = useState(false);
             const [hearts, setHearts] = useState([]);
             const [flowers, setFlowers] = useState([]);
             const [confirmed, setConfirmed] = useState(false);
@@ -91,10 +125,16 @@
             const [guestName, setGuestName] = useState('');
             const [showScrollArrow, setShowScrollArrow] = useState(true);
             const [showTopBar, setShowTopBar] = useState(false);
+            const [showGiftModal, setShowGiftModal] = useState(false);
+            const [showConfirmModal, setShowConfirmModal] = useState(false);
+            const [selectedGiftForModal, setSelectedGiftForModal] = useState(null);
+            const [modalInputName, setModalInputName] = useState('');
+            const [videoInView, setVideoInView] = useState(false);
             const audioRef = useRef(null);
             const detailsRef = useRef(null);
             const giftsRef = useRef(null);
             const confirmRef = useRef(null);
+            const videoRef = useRef(null);
 
             const gifts = [
                 { id: 'panelas', name: 'Jogo de panelas', emoji: '🍳' },
@@ -112,6 +152,21 @@
             ];
 
             useEffect(() => {
+                if (videoRef.current) {
+                    const observer = new IntersectionObserver(
+                        (entries) => {
+                            entries.forEach(entry => {
+                                setVideoInView(entry.isIntersecting);
+                            });
+                        },
+                        { threshold: 0.5 }
+                    );
+                    observer.observe(videoRef.current);
+                    return () => observer.disconnect();
+                }
+            }, [isOpen]);
+
+            useEffect(() => {
                 if (isOpen && audioRef.current) {
                     audioRef.current.currentTime = 60;
                     audioRef.current.play().then(() => setIsPlaying(true)).catch(err => console.log('Autoplay bloqueado'));
@@ -120,17 +175,8 @@
 
             useEffect(() => {
                 const handleScroll = () => {
-                    if (window.scrollY > 300) {
-                        setShowScrollArrow(false);
-                    } else {
-                        setShowScrollArrow(true);
-                    }
-
-                    if (window.scrollY > 100) {
-                        setShowTopBar(true);
-                    } else {
-                        setShowTopBar(false);
-                    }
+                    setShowScrollArrow(window.scrollY <= 300);
+                    setShowTopBar(window.scrollY > 100);
                 };
                 
                 if (isOpen) {
@@ -220,38 +266,67 @@
             }, []);
 
             const handleReserveGift = async (gift) => {
-                if (reservedGifts[gift.id]) {
-                    alert('Este presente já foi reservado por outro convidado!');
-                    return;
-                }
-                const name = prompt('Digite seu nome para reservar este presente:');
-                if (!name || name.trim() === '') return;
+                if (reservedGifts[gift.id]) return;
+                setSelectedGiftForModal(gift);
+                setShowGiftModal(true);
+            };
 
+            const confirmReserveGift = async () => {
+                if (!modalInputName.trim()) return;
+
+                setIsLoading(true);
                 try {
-                    const giftRef = window.firebaseRef(window.firebaseDB, `reserved-gifts/${gift.id}`);
-                    await window.firebaseSet(giftRef, name.trim());
-                    setSelectedGift(gift.name);
-                    alert(`Presente "${gift.name}" reservado com sucesso! 🎁`);
+                    const giftRef = window.firebaseRef(window.firebaseDB, `reserved-gifts/${selectedGiftForModal.id}`);
+                    await window.firebaseSet(giftRef, modalInputName.trim());
+                    setSelectedGift(selectedGiftForModal.name);
+                    setShowGiftModal(false);
+                    setModalInputName('');
                 } catch (error) {
                     alert('Erro ao reservar presente. Tente novamente.');
+                } finally {
+                    setIsLoading(false);
                 }
             };
 
             const handleConfirm = () => {
-                const name = prompt('Digite seu nome para confirmar presença:');
-                if (!name || name.trim() === '') return;
+                setShowConfirmModal(true);
+            };
 
-                setGuestName(name.trim());
+            const confirmPresence = () => {
+                if (!modalInputName.trim()) return;
+
+                setGuestName(modalInputName.trim());
                 const gift = selectedGift || 'Nenhum presente selecionado ainda';
-                const msg = `Olá! Sou ${name.trim()} e confirmo minha presença no Chá de Panela da Stefanny & Dhiego! 🎉\n\nPresente escolhido: ${gift}\n\nNos vemos dia 14/02/2026! 💕`;
+                const msg = `Olá! Sou ${modalInputName.trim()} e confirmo minha presença no Chá de Panela da Stefanny & Dhiego! 🎉\n\nPresente escolhido: ${gift}\n\nNos vemos dia 14/02/2026! 💕`;
                 
                 setConfirmed(true);
                 setShowThankYou(true);
+                setShowConfirmModal(false);
+                setModalInputName('');
                 
                 setTimeout(() => {
                     window.open(`https://wa.me/5562995483241?text=${encodeURIComponent(msg)}`, '_blank');
                     setConfirmed(false);
                 }, 1000);
+            };
+
+            const handleShare = async () => {
+                const shareData = {
+                    title: 'Chá de Panela - Stefanny & Dhiego',
+                    text: 'Você foi convidado para o Chá de Panela da Stefanny & Dhiego! 💕',
+                    url: window.location.href
+                };
+
+                if (navigator.share) {
+                    try {
+                        await navigator.share(shareData);
+                    } catch (err) {
+                        console.log('Erro ao compartilhar');
+                    }
+                } else {
+                    navigator.clipboard.writeText(window.location.href);
+                    alert('Link copiado para a área de transferência!');
+                }
             };
 
             const getWeatherIcon = (code) => {
@@ -279,10 +354,10 @@
             if (!isOpen) {
                 return (
                     <div className="min-h-screen bg-gradient-to-br from-purple-400 via-violet-300 to-purple-300 flex items-center justify-center p-4 relative overflow-hidden">
-                        <div className="absolute top-10 left-10 text-6xl opacity-20 animate-pulse">💕</div>
-                        <div className="absolute top-20 right-20 text-5xl opacity-20 animate-pulse delay-1">🎊</div>
-                        <div className="absolute bottom-20 left-20 text-5xl opacity-20 animate-pulse delay-2">✨</div>
-                        <div className="absolute bottom-10 right-10 text-6xl opacity-20 animate-pulse">💍</div>
+                        <div className="absolute top-10 left-10 text-6xl opacity-20 animate-pulse" aria-hidden="true">💕</div>
+                        <div className="absolute top-20 right-20 text-5xl opacity-20 animate-pulse delay-1" aria-hidden="true">🎊</div>
+                        <div className="absolute bottom-20 left-20 text-5xl opacity-20 animate-pulse delay-2" aria-hidden="true">✨</div>
+                        <div className="absolute bottom-10 right-10 text-6xl opacity-20 animate-pulse" aria-hidden="true">💍</div>
                         
                         <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-md text-center relative z-10 transform hover:scale-105 transition-all duration-300">
                             <div className="mb-6">
@@ -325,11 +400,70 @@
                 <div className="min-h-screen bg-gradient-to-br from-purple-100 via-violet-50 to-purple-100 relative overflow-hidden">
                     <audio ref={audioRef} loop><source src="Perfect.mp3" type="audio/mpeg" /></audio>
 
+                    <Modal isOpen={showGiftModal} onClose={() => setShowGiftModal(false)} title="Reservar Presente">
+                        {selectedGiftForModal && (
+                            <div>
+                                <div className="text-center mb-4">
+                                    <span className="text-6xl">{selectedGiftForModal.emoji}</span>
+                                    <p className="text-lg font-semibold mt-2">{selectedGiftForModal.name}</p>
+                                </div>
+                                <input
+                                    type="text"
+                                    value={modalInputName}
+                                    onChange={(e) => setModalInputName(e.target.value)}
+                                    placeholder="Digite seu nome"
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none mb-4"
+                                    onKeyPress={(e) => e.key === 'Enter' && confirmReserveGift()}
+                                    aria-label="Nome para reservar presente"
+                                />
+                                <div className="flex gap-3">
+                                    <button onClick={() => setShowGiftModal(false)} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-lg font-semibold transition-all">
+                                        Cancelar
+                                    </button>
+                                    <button onClick={confirmReserveGift} disabled={isLoading || !modalInputName.trim()} className="flex-1 bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                                        {isLoading ? <LoadingSpinner /> : '✓ Confirmar'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </Modal>
+
+                    <Modal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} title="Confirmar Presença">
+                        <div>
+                            <div className="text-center mb-4">
+                                <span className="text-6xl">💕</span>
+                                <p className="text-gray-600 mt-3">Digite seu nome para confirmar sua presença no nosso Chá de Panela!</p>
+                            </div>
+                            <input
+                                type="text"
+                                value={modalInputName}
+                                onChange={(e) => setModalInputName(e.target.value)}
+                                placeholder="Digite seu nome"
+                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none mb-4"
+                                onKeyPress={(e) => e.key === 'Enter' && confirmPresence()}
+                                aria-label="Nome para confirmar presença"
+                            />
+                            {selectedGift && (
+                                <div className="bg-purple-50 p-3 rounded-lg mb-4">
+                                    <p className="text-sm text-purple-700"><strong>Presente escolhido:</strong> {selectedGift}</p>
+                                </div>
+                            )}
+                            <div className="flex gap-3">
+                                <button onClick={() => setShowConfirmModal(false)} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-lg font-semibold transition-all">
+                                    Cancelar
+                                </button>
+                                <button onClick={confirmPresence} disabled={!modalInputName.trim()} className="flex-1 bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                    ✓ Confirmar
+                                </button>
+                            </div>
+                        </div>
+                    </Modal>
+
                     {showTopBar && (
                         <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-purple-600 to-violet-600 text-white py-3 px-4 shadow-lg z-50 animate-fadeIn">
                             <div className="container mx-auto max-w-2xl flex items-center justify-between">
                                 <span className="text-sm font-semibold flex items-center gap-2">
-                                    ⚠️ Não esqueça de confirmar presença no final!
+                                    ⚠️ Não esqueça de confirmar presença!
                                 </span>
                                 <button onClick={() => scrollToSection(confirmRef)} className="bg-white text-purple-600 px-4 py-1 rounded-full text-xs font-bold hover:scale-105 transition-transform">
                                     IR AGORA
@@ -339,20 +473,25 @@
                     )}
 
                     {hearts.map(h => (
-                        <div key={h.id} className="absolute bottom-0 text-purple-400 animate-float" style={{ left: `${h.left}%`, animationDelay: `${h.delay}s`, fontSize: '24px' }}>❤️</div>
+                        <div key={h.id} className="absolute bottom-0 text-purple-400 animate-float pointer-events-none" style={{ left: `${h.left}%`, animationDelay: `${h.delay}s`, fontSize: '24px' }} aria-hidden="true">❤️</div>
                     ))}
 
                     {flowers.map(f => (
-                        <div key={f.id} className="absolute top-0 animate-fall" style={{ left: `${f.left}%`, animationDelay: `${f.delay}s`, fontSize: '28px' }}>{f.flower}</div>
+                        <div key={f.id} className="absolute top-0 animate-fall pointer-events-none" style={{ left: `${f.left}%`, animationDelay: `${f.delay}s`, fontSize: '28px' }} aria-hidden="true">{f.flower}</div>
                     ))}
 
                     <div className="container mx-auto px-4 py-8 max-w-2xl relative z-10" style={{ paddingTop: showTopBar ? '80px' : '32px' }}>
                         <div className="bg-white rounded-3xl shadow-2xl p-8 mb-6 text-center animate-fadeIn relative">
-                            <button onClick={() => { if (audioRef.current) { isPlaying ? audioRef.current.pause() : audioRef.current.play(); setIsPlaying(!isPlaying); }}} className="absolute top-4 right-4 bg-purple-100 hover:bg-purple-200 p-3 rounded-full transition-all">
-                                <span className={isPlaying ? 'animate-pulse' : ''}>🎵</span>
-                            </button>
+                            <div className="absolute top-4 right-4 flex gap-2">
+                                <button onClick={handleShare} className="bg-purple-100 hover:bg-purple-200 p-3 rounded-full transition-all" title="Compartilhar convite" aria-label="Compartilhar convite">
+                                    <span>🔗</span>
+                                </button>
+                                <button onClick={() => { if (audioRef.current) { isPlaying ? audioRef.current.pause() : audioRef.current.play(); setIsPlaying(!isPlaying); }}} className="bg-purple-100 hover:bg-purple-200 p-3 rounded-full transition-all" title={isPlaying ? 'Pausar música' : 'Tocar música'} aria-label={isPlaying ? 'Pausar música' : 'Tocar música'}>
+                                    <span className={isPlaying ? 'animate-pulse' : ''}>🎵</span>
+                                </button>
+                            </div>
                             
-                            <div className="text-6xl mb-4">👰🏻‍♀️🤵🏻</div>
+                            <div className="text-6xl mb-4" aria-label="Noivos">👰🏻‍♀️🤵🏻</div>
                             <h1 className="text-4xl font-bold text-purple-600 mb-2">Chá de Panela</h1>
                             <h2 className="text-2xl text-gray-700 mb-4">Stefanny & Dhiego</h2>
                             <p className="text-gray-600 italic">"O amor está nos detalhes... e nas panelas que vamos usar juntos!"</p>
@@ -360,15 +499,15 @@
 
                         <div className="bg-white rounded-3xl shadow-xl p-4 mb-6 animate-fadeIn">
                             <div className="grid grid-cols-3 gap-2">
-                                <button onClick={() => scrollToSection(detailsRef)} className="flex flex-col items-center justify-center p-3 rounded-xl bg-purple-50 hover:bg-purple-100 transition-all group">
+                                <button onClick={() => scrollToSection(detailsRef)} className="flex flex-col items-center justify-center p-3 rounded-xl bg-purple-50 hover:bg-purple-100 transition-all group" aria-label="Ir para Data e Local">
                                     <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">📅</span>
                                     <span className="text-xs font-semibold text-purple-600">Data & Local</span>
                                 </button>
-                                <button onClick={() => scrollToSection(giftsRef)} className="flex flex-col items-center justify-center p-3 rounded-xl bg-violet-50 hover:bg-violet-100 transition-all group">
+                                <button onClick={() => scrollToSection(giftsRef)} className="flex flex-col items-center justify-center p-3 rounded-xl bg-violet-50 hover:bg-violet-100 transition-all group" aria-label="Ir para Presentes">
                                     <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">🎁</span>
                                     <span className="text-xs font-semibold text-violet-600">Presentes</span>
                                 </button>
-                                <button onClick={() => scrollToSection(confirmRef)} className="flex flex-col items-center justify-center p-3 rounded-xl bg-pink-50 hover:bg-pink-100 transition-all group animate-pulse-glow">
+                                <button onClick={() => scrollToSection(confirmRef)} className="flex flex-col items-center justify-center p-3 rounded-xl bg-pink-50 hover:bg-pink-100 transition-all group animate-pulse-glow" aria-label="Ir para Confirmação">
                                     <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">✅</span>
                                     <span className="text-xs font-semibold text-pink-600">Confirmar</span>
                                 </button>
@@ -398,11 +537,18 @@
                             </p>
                         </div>
 
-                        <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
+                        <div className="bg-white rounded-3xl shadow-xl p-6 mb-6" ref={videoRef}>
                             <div className="rounded-2xl overflow-hidden shadow-lg">
-                                <video autoPlay loop muted playsInline className="w-full">
-                                    <source src="video.mp4" type="video/mp4" />
-                                </video>
+                                {videoInView ? (
+                                    <video autoPlay loop muted playsInline className="w-full">
+                                        <source src="video.mp4" type="video/mp4" />
+                                        Seu navegador não suporta vídeos.
+                                    </video>
+                                ) : (
+                                    <div className="w-full h-64 bg-purple-100 flex items-center justify-center">
+                                        <LoadingSpinner />
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -430,15 +576,15 @@
                             <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">📅 Detalhes do Evento</h3>
                             <div className="space-y-3">
                                 <div className="flex items-start gap-3">
-                                    <span>📅</span>
+                                    <span aria-hidden="true">📅</span>
                                     <div><p className="font-semibold">Data</p><p className="text-gray-600">Sábado, 14 de Fevereiro de 2026</p></div>
                                 </div>
                                 <div className="flex items-start gap-3">
-                                    <span>🕔</span>
+                                    <span aria-hidden="true">🕔</span>
                                     <div><p className="font-semibold">Horário</p><p className="text-gray-600">17:00h</p></div>
                                 </div>
                                 <div className="flex items-start gap-3">
-                                    <span>📍</span>
+                                    <span aria-hidden="true">📍</span>
                                     <div className="flex-1">
                                         <p className="font-semibold">Local</p>
                                         <p className="text-gray-600">Espaço Esquina do Paraiso</p>
@@ -447,20 +593,20 @@
                                 </div>
                             </div>
 
-                            <button onClick={() => window.open('https://maps.app.goo.gl/vcshqsjwYWUnmFJY6', '_blank')} className="w-full mt-4 bg-purple-100 hover:bg-purple-200 text-purple-600 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all">
+                            <button onClick={() => window.open('https://maps.app.goo.gl/vcshqsjwYWUnmFJY6', '_blank')} className="w-full mt-4 bg-purple-100 hover:bg-purple-200 text-purple-600 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all" aria-label="Abrir localização no Google Maps">
                                 🧭 Abrir no Google Maps
                             </button>
 
                             <button onClick={() => {
                                 const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Chá de Panela - Stefanny & Dhiego')}&dates=20260214T170000Z/20260214T210000Z&details=${encodeURIComponent('Chá de Panela da Stefanny e Dhiego')}&location=${encodeURIComponent('Espaço Esquina do Paraiso - Res. Paraiso 2')}`;
                                 window.open(url, '_blank');
-                            }} className="w-full mt-2 bg-violet-100 hover:bg-violet-200 text-violet-600 py-3 rounded-lg font-semibold transition-all">
+                            }} className="w-full mt-2 bg-violet-100 hover:bg-violet-200 text-violet-600 py-3 rounded-lg font-semibold transition-all" aria-label="Adicionar evento ao Google Calendar">
                                 📅 Adicionar a Agenda
                             </button>
                         </div>
 
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">⚠️Informação Importante</h3>
+                            <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">⚠️ Informação Importante</h3>
                             <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4 text-center">
                                 <p className="text-lg font-semibold text-amber-700 mb-2">🥤 Leve Sua Bebida de Preferência!</p>
                                 <p className="text-sm text-gray-600">Teremos muita comida deliciosa, mas as bebidas ficam por sua conta! 😊</p>
@@ -470,7 +616,7 @@
                         <div ref={giftsRef} className="bg-white rounded-3xl shadow-xl p-6 mb-6">
                             <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">🎁 Sugestões de Presentes</h3>
                             {loadingGifts ? (
-                                <div className="text-center py-8 text-gray-500">Carregando lista de presentes...</div>
+                                <div className="text-center py-8 text-gray-500"><LoadingSpinner /><p className="mt-3">Carregando lista de presentes...</p></div>
                             ) : (
                                 <>
                                     <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -482,14 +628,14 @@
                                             const isSelected = selectedGift === gift.name;
                                             
                                             return (
-                                                <button key={gift.id} onClick={() => handleReserveGift(gift)} disabled={isReserved} className={`p-3 rounded-lg border-2 text-left transition-all relative ${isReserved ? 'border-gray-300 bg-gray-100 opacity-60 cursor-not-allowed' : isSelected ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'}`}>
+                                                <button key={gift.id} onClick={() => handleReserveGift(gift)} disabled={isReserved} className={`p-3 rounded-lg border-2 text-left transition-all relative ${isReserved ? 'border-gray-300 bg-gray-100 opacity-60 cursor-not-allowed' : isSelected ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'}`} aria-label={`${gift.name}${isReserved ? ' - Reservado por ' + isReserved : ''}`}>
                                                     <div className="flex items-start gap-2">
-                                                        <span className="text-2xl">{gift.emoji}</span>
+                                                        <span className="text-2xl" aria-hidden="true">{gift.emoji}</span>
                                                         <div className="flex-1">
                                                             <span className="text-sm block">{gift.name}</span>
                                                             {isReserved && <span className="text-xs text-gray-500 mt-1 block">Reservado por {isReserved}</span>}
                                                         </div>
-                                                        {isReserved && <span className="text-green-500 text-lg">✓</span>}
+                                                        {isReserved && <span className="text-green-500 text-lg" aria-hidden="true">✓</span>}
                                                     </div>
                                                 </button>
                                             );
@@ -503,10 +649,10 @@
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
                             <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">☀️ Previsão do Tempo</h3>
                             {loadingWeather ? (
-                                <div className="text-center py-8 text-gray-500"><div className="text-4xl mb-3">⏳</div>Carregando previsão do tempo...</div>
+                                <div className="text-center py-8 text-gray-500"><div className="text-4xl mb-3">⏳</div><LoadingSpinner /><p className="mt-3">Carregando previsão do tempo...</p></div>
                             ) : weather ? (
                                 <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-4">
-                                    <p className="text-center text-2xl mb-2">{getWeatherIcon(weather.weatherCode)}</p>
+                                    <p className="text-center text-2xl mb-2" aria-label={getWeatherDesc(weather.weatherCode)}>{getWeatherIcon(weather.weatherCode)}</p>
                                     <p className="text-center font-semibold text-gray-700 mb-3">{getWeatherDesc(weather.weatherCode)}</p>
                                     <div className="flex justify-center gap-6 mb-2">
                                         <div className="text-center">
@@ -533,13 +679,13 @@
                         <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
                             <h3 className="text-xl font-semibold text-purple-600 mb-4 flex items-center gap-2">💰 Prefere Contribuir via PIX?</h3>
                             <p className="text-gray-600 mb-4">Se preferir, você pode fazer uma contribuição em dinheiro para ajudar a mobiliar nosso lar!</p>
-                            <button onClick={() => setShowPix(!showPix)} className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold transition-all">
+                            <button onClick={() => setShowPix(!showPix)} className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold transition-all" aria-label={showPix ? 'Ocultar QR Code PIX' : 'Ver QR Code PIX'}>
                                 {showPix ? 'Ocultar QR Code PIX' : 'Ver QR Code PIX'}
                             </button>
                             {showPix && (
-                                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                                <div className="mt-4 p-4 bg-gray-50 rounded-lg animate-fadeIn">
                                     <div className="bg-white p-4 rounded-lg border-2 border-gray-200 flex items-center justify-center mb-4">
-                                        <img src="qrcode-pix.png" alt="QR Code PIX" className="w-64 h-64 object-contain" />
+                                        <img src="qrcode-pix.png" alt="QR Code PIX para contribuição" className="w-64 h-64 object-contain" />
                                     </div>
                                     <p className="text-sm text-gray-600 mb-2 text-center"><strong>PIX COPIA E COLA:</strong></p>
                                     
@@ -555,7 +701,7 @@
                                             } catch (err) {
                                                 alert('Erro ao copiar a chave. Por favor, copie manualmente.');
                                             }
-                                        }} className={`p-3 rounded-lg font-semibold transition-all flex-shrink-0 flex items-center justify-center ${pixCopied ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}>
+                                        }} className={`p-3 rounded-lg font-semibold transition-all flex-shrink-0 flex items-center justify-center ${pixCopied ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'}`} aria-label="Copiar chave PIX">
                                             {pixCopied ? <span className="flex items-center gap-1">✓ Copiado!</span> : <span>📋</span>}
                                         </button>
                                     </div>
