@@ -9,7 +9,7 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <meta property="og:title" content="Chá de Panela - Stefanny & Dhiego" />
-    <meta property="og:description" content="Você foi convidado para o Chá de Panela da Stefanny & Dhiego! 🎉 Data: 14/02/2026 às 17:00h. Local: Espaço Esquina do Paraiso - Res. Paraiso 2." />
+    <meta property="og:description" content="Você foi convidado para o Chá de Panela da Stefanny & Dhiego! 🎉 Data: 14/02/2026 às 09:00h. Local: Espaço Esquina do Paraiso - Res. Paraiso 2." />
     <meta property="og:image" content="https://dhiego16.github.io/cha-de-panela/convite.png?v=1" />
     <meta property="og:image:width" content="1536" />
     <meta property="og:image:height" content="1024" />
@@ -251,7 +251,7 @@
 
             useEffect(() => {
                 const calc = () => {
-                    const diff = new Date('2026-02-14T17:00:00') - new Date();
+                    const diff = new Date('2026-02-14T09:00:00') - new Date();
                     if (diff > 0) {
                         setTimeLeft({
                             dias: Math.floor(diff / (1000 * 60 * 60 * 24)),
@@ -574,7 +574,7 @@
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <span aria-hidden="true">🕔</span>
-                                    <div><p className="font-semibold">Horário</p><p className="text-gray-600">17:00h</p></div>
+                                    <div><p className="font-semibold">Horário</p><p className="text-gray-600">09:00h</p></div>
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <span aria-hidden="true">📍</span>
@@ -591,7 +591,7 @@
                             </button>
 
                             <button onClick={() => {
-                                const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Chá de Panela - Stefanny & Dhiego')}&dates=20260214T170000Z/20260214T210000Z&details=${encodeURIComponent('Chá de Panela da Stefanny e Dhiego')}&location=${encodeURIComponent('Espaço Esquina do Paraiso - Res. Paraiso 2')}`;
+                                const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Chá de Panela - Stefanny & Dhiego')}&dates=20260214T090000Z/20260214T210000Z&details=${encodeURIComponent('Chá de Panela da Stefanny e Dhiego')}&location=${encodeURIComponent('Espaço Esquina do Paraiso - Res. Paraiso 2')}`;
                                 window.open(url, '_blank');
                             }} className="w-full mt-2 bg-violet-100 hover:bg-violet-200 text-violet-600 py-3 rounded-lg font-semibold transition-all" aria-label="Adicionar evento ao Google Calendar">
                                 📅 Adicionar a Agenda
